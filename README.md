@@ -29,3 +29,9 @@ Conectar los distintos proyectos dentro de una solución:
 - El proyecto principal se conecta con DataAccess, por eso en el proyecto principal se debe agregar una dependencia. 
 -> Dependencies -> Add Project Reference y seleccionar el Data Access
 
+
+Transactions
+
+https://www.youtube.com/watch?v=QVkpzuiiVtw
+
+
