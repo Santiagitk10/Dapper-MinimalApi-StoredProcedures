@@ -40,6 +40,30 @@ namespace DataAccess.Data
             _db.saveData("dbo.spUser_Update", user);
 
         public Task DeletetUser(int id) =>
-            _db.saveData("dbo.spUser_Delete", new { Id = id });
+           _db.saveData("dbo.spUser_Delete", new { Id = id });
+
+        //METODO PARA USAR LA TRANSACCION
+
+        public Task InsertUserInTransaction(UserModel user)
+        {
+            using (_db)
+            {
+                try
+                {
+                    _db.StartTransaction();
+                    var response = _db.SaveDataInTransaction("dbo.spUser_Insert", new { user.FirstName, user.LastName });
+
+                    //Aquí irían los demás métodos que modifican la base de datos
+
+                    _db.Dispose();
+                    return response;
+                }
+                catch
+                {
+                    _db.RollbackTransaction();
+                    throw;
+                }
+            }
+        }
     }
 }

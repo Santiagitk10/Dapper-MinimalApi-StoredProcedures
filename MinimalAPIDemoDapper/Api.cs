@@ -14,6 +14,8 @@ namespace MinimalAPIDemoDapper
             app.MapPost("/Users", InsertUser);
             app.MapPut("/Users", UpdateUser);
             app.MapDelete("Users", DeleteUser);
+
+            app.MapPost("/UsersTransaction", InsertUserTransction);
         }
 
         private static async Task<IResult> GetUsers(IUserData data)
@@ -73,6 +75,21 @@ namespace MinimalAPIDemoDapper
             try
             {
                 await data.DeletetUser(id);
+                return Results.Ok();
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem(ex.Message);
+            }
+        }
+
+        //END POINT PARA PROBAR LA TRANSACCIÓN
+
+        private static async Task<IResult> InsertUserTransction(UserModel user, IUserData data)
+        {
+            try
+            {
+                await data.InsertUserInTransaction(user);
                 return Results.Ok();
             }
             catch (Exception ex)

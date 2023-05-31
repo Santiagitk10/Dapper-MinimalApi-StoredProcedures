@@ -6,7 +6,7 @@ using System.Data.SqlClient;
 namespace DataAccess.DbAccess
 {
     //Clase que habla con Sql a través de Dapper
-    public class SqlDataAccess : ISqlDataAccess
+    public class SqlDataAccess : ISqlDataAccess, IDisposable
     {
         //Para obtener la data de appsettings.json, secrets.json, appsettings.Development.json,
         //environment variables, keyvault, etc
@@ -42,6 +42,63 @@ namespace DataAccess.DbAccess
             //Usamos Execute porque estamos ejecutando algo, no solicitando data
             await connection.ExecuteAsync(storedProcedure, parameters,
                 commandType: CommandType.StoredProcedure);
+        }
+
+        //PARA LAS TRANSACTIONS
+        //No se puede usar el "using" de los métodos LoadData y saveData porque este cierra la conexión y se deben
+        //hacer multiples transacciones antes de cerrar la conexión
+
+        //Tiene underscore porque ya tengo otra conexión para los métodos que no son en transacción
+        private IDbConnection _connection;
+
+        private IDbTransaction _transaction;
+
+        //Open connection/start transaction
+        public void StartTransaction(string connectionId = "Default")
+        {
+            _connection = new SqlConnection(_config.GetConnectionString(connectionId));
+            _connection.Open();
+            _transaction = _connection.BeginTransaction();
+        }
+
+        //Save using the transaction
+        //Ya no necesitamos crear la conexión porque ya se habría creado al momento de iniciar la transacción
+        public async Task SaveDataInTransaction<T>(
+            string storedProcedure,
+            T parameters)
+        {
+            await _connection.ExecuteAsync(storedProcedure, parameters,
+                commandType: CommandType.StoredProcedure, transaction: _transaction);
+        }
+
+        //Load using the transaction
+        public async Task<IEnumerable<T>> LoadDataInTransaction<T, U>(
+            string storedProcedure,
+            U parameters)
+        {
+            return await _connection.QueryAsync<T>(storedProcedure, parameters,
+                commandType: CommandType.StoredProcedure, transaction: _transaction);
+        }
+
+        //Close connection/stop transaction
+        public void CommitTransaction()
+        {
+            //Si la transacción es nula o la conexión no se ejecutan los métodos, por eso el ?. Así se puede llamar el
+            //método en multiples ocasiones
+            _transaction?.Commit();
+            _connection?.Close();
+        }
+
+        public void RollbackTransaction()
+        {
+            _transaction?.Rollback();
+            _connection?.Close();
+        }
+
+        //Dispose
+        public void Dispose()
+        {
+            CommitTransaction();
         }
     }
 }

@@ -8,8 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 //Se agrega la dependencia del data access
-builder.Services.AddSingleton<ISqlDataAccess, SqlDataAccess>();
-builder.Services.AddSingleton<IUserData, UserData>();
+builder.Services.AddTransient<ISqlDataAccess, SqlDataAccess>();
+builder.Services.AddTransient<IUserData, UserData>();
 
 var app = builder.Build();
 
