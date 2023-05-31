@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using System.Data;
 
 namespace DataAccess.DbAccess
 {
@@ -10,9 +11,9 @@ namespace DataAccess.DbAccess
 
         Task saveData<T>(string storedProcedure, T parameters, string connectionId = "Default");
 
-        void StartTransaction(string connectionId = "Default");
+        //void StartTransaction(string connectionId = "Default");
 
-        Task SaveDataInTransaction<T>(string storedProcedure, T parameters);
+        Task SaveDataInTransaction<T>(string storedProcedure, T parameters, IDbTransaction trans);
 
         Task<IEnumerable<T>> LoadDataInTransaction<T, U>(string storedProcedure, U parameters);
 

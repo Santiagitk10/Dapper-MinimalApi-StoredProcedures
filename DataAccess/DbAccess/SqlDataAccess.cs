@@ -54,21 +54,22 @@ namespace DataAccess.DbAccess
         private IDbTransaction _transaction;
 
         //Open connection/start transaction
-        public void StartTransaction(string connectionId = "Default")
-        {
-            _connection = new SqlConnection(_config.GetConnectionString(connectionId));
-            _connection.Open();
-            _transaction = _connection.BeginTransaction();
-        }
+        //public void StartTransaction(string connectionId = "Default")
+        //{
+        //    _connection = new SqlConnection(_config.GetConnectionString(connectionId));
+        //    _connection.Open();
+        //    _transaction = _connection.BeginTransaction();
+        //}
 
         //Save using the transaction
         //Ya no necesitamos crear la conexión porque ya se habría creado al momento de iniciar la transacción
         public async Task SaveDataInTransaction<T>(
             string storedProcedure,
-            T parameters)
+            T parameters,
+            IDbTransaction trans)
         {
             await _connection.ExecuteAsync(storedProcedure, parameters,
-                commandType: CommandType.StoredProcedure, transaction: _transaction);
+                commandType: CommandType.StoredProcedure, transaction: trans);
         }
 
         //Load using the transaction

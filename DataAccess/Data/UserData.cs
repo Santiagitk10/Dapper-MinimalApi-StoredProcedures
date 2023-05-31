@@ -1,7 +1,10 @@
 ﻿using DataAccess.DbAccess;
 using DataAccess.Models;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,10 +15,12 @@ namespace DataAccess.Data
     public class UserData : IUserData
     {
         private readonly ISqlDataAccess _db;
+        private IConfiguration _config { get; }
 
-        public UserData(ISqlDataAccess db)
+        public UserData(ISqlDataAccess db, IConfiguration config)
         {
             _db = db;
+            _config = config;
         }
 
         //Se usa el arrow sin los curly braces sin el return porque el método cabe en una sola línea
@@ -46,23 +51,24 @@ namespace DataAccess.Data
 
         public Task InsertUserInTransaction(UserModel user)
         {
-            using (_db)
+            IDbConnection connection = new SqlConnection(_config.GetConnectionString("Default"));
+            connection.Open();
+
+            using var trans = connection.BeginTransaction();
+
+            try
             {
-                try
-                {
-                    _db.StartTransaction();
-                    var response = _db.SaveDataInTransaction("dbo.spUser_Insert", new { user.FirstName, user.LastName });
+                var response = _db.SaveDataInTransaction("dbo.spUser_Insert", new { user.FirstName, user.LastName }, trans);
 
-                    //Aquí irían los demás métodos que modifican la base de datos
+                //Aquí irían los demás métodos que modifican la base de datos
 
-                    _db.Dispose();
-                    return response;
-                }
-                catch
-                {
-                    _db.RollbackTransaction();
-                    throw;
-                }
+                _db.Dispose();
+                return response;
+            }
+            catch
+            {
+                _db.RollbackTransaction();
+                throw;
             }
         }
     }
